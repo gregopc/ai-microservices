@@ -31,10 +31,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-producthub}
       SERVER_PORT: 8081
       EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
+      CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
       postgres:
         condition: service_healthy
       eureka-server:
+        condition: service_started
+      config-server:
         condition: service_started
     restart: unless-stopped
 
@@ -47,6 +50,18 @@ services:
     environment:
       SERVER_PORT: 8761
       EUREKA_HOSTNAME: eureka-server
+    restart: unless-stopped
+
+  config-server:
+    build:
+      context: ../config-server
+      dockerfile: dockerfile
+    ports:
+      - "8888:8888"
+    env_file:
+      - ../config-server/.env
+    environment:
+      SERVER_PORT: 8888
     restart: unless-stopped
 
 volumes:

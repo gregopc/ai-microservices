@@ -18,4 +18,4 @@
 *.cmd text eol=crlf
 
 # Maven Wrapper
-/mvnw text eol=lf
+mvnw text eol=lf
