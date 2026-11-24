@@ -17,6 +17,37 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
+
+  product-hub:
+    build:
+      context: .
+      dockerfile: dockerfile
+    ports:
+      - "${PRODUCT_HUB_PORT:-8081}:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-product_hub}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-producthub}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-producthub}
+      SERVER_PORT: 8081
+      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
+    depends_on:
+      postgres:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    restart: unless-stopped
+
+  eureka-server:
+    build:
+      context: ../eureka-server
+      dockerfile: dockerfile
+    ports:
+      - "${EUREKA_SERVER_PORT:-8761}:8761"
+    environment:
+      SERVER_PORT: 8761
+      EUREKA_HOSTNAME: eureka-server
+    restart: unless-stopped
 
 volumes:
   product-hub-postgres-data:
