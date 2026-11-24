@@ -83,5 +83,43 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  ai-service:
+    build:
+      context: ../ai-service
+      dockerfile: dockerfile
+    ports:
+      - "${AI_SERVICE_PORT:-8082}:8082"
+    env_file:
+      - ../ai-service/.env
+    environment:
+      SERVER_PORT: 8082
+      CONFIG_SERVER_URL: http://config-server:8888
+      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
+      SPRING_DATASOURCE_URL: jdbc:postgresql://ai-service-db:5432/ai_service
+    depends_on:
+      config-server:
+        condition: service_started
+      eureka-server:
+        condition: service_started
+      ai-service-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ai-service-db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: ai_service
+      POSTGRES_USER: ai_service
+      POSTGRES_PASSWORD: ai_service
+    volumes:
+      - ai-service-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ai_service -d ai_service"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   product-hub-postgres-data:
+  ai-service-data:
