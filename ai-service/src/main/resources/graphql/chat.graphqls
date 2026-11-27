@@ -1,0 +1,17 @@
+type Query {
+    _empty: String
+}
+
+type Mutation {
+    chat(input: ChatInput!): ChatResponse!
+}
+
+input ChatInput {
+    message: String!
+    conversationId: ID
+}
+
+type ChatResponse {
+    message: String!
+    conversationId: ID!
+}

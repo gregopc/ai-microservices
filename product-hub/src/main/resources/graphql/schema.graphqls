@@ -1,0 +1,31 @@
+type Query {
+    products(
+        category: String
+        minPrice: Float
+        maxPrice: Float
+        inStock: Boolean
+        page: Int = 0
+        size: Int = 50
+        sortBy: String = "name"
+        sortDirection: String = "ASC"
+    ): ProductPage!
+}
+
+type ProductPage {
+    content: [Product!]!
+    totalPages: Int!
+    totalElements: Int!
+    number: Int!
+    size: Int!
+}
+
+type Product {
+    id: ID!
+    name: String!
+    description: String
+    price: Float!
+    category: String
+    imageUrl: String
+    stock: Int!
+    createdAt: String
+}
