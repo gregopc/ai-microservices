@@ -30,26 +30,41 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-producthub}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-producthub}
       SERVER_PORT: 8081
-      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
+      EUREKA_SERVER_URL: "http://eureka-server1:8761/eureka/,http://eureka-server2:8762/eureka/"
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
       postgres:
         condition: service_healthy
-      eureka-server:
+      eureka-server1:
+        condition: service_started
+      eureka-server2:
         condition: service_started
       config-server:
         condition: service_started
     restart: unless-stopped
 
-  eureka-server:
+  eureka-server1:
     build:
       context: ../eureka-server
       dockerfile: dockerfile
     ports:
-      - "${EUREKA_SERVER_PORT:-8761}:8761"
+      - "${EUREKA_SERVER_1_PORT:-8761}:8761"
     environment:
       SERVER_PORT: 8761
-      EUREKA_HOSTNAME: eureka-server
+      EUREKA_HOSTNAME: eureka-server1
+      EUREKA_PEER_URL: http://eureka-server2:8762/eureka/
+    restart: unless-stopped
+
+  eureka-server2:
+    build:
+      context: ../eureka-server
+      dockerfile: dockerfile
+    ports:
+      - "${EUREKA_SERVER_2_PORT:-8762}:8762"
+    environment:
+      SERVER_PORT: 8762
+      EUREKA_HOSTNAME: eureka-server2
+      EUREKA_PEER_URL: http://eureka-server1:8761/eureka/
     restart: unless-stopped
 
   config-server:
@@ -72,10 +87,12 @@ services:
       - "${API_GATEWAY_PORT:-8080}:8080"
     environment:
       SERVER_PORT: 8080
-      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
+      EUREKA_SERVER_URL: "http://eureka-server1:8761/eureka/,http://eureka-server2:8762/eureka/"
       CONFIG_SERVER_URL: http://config-server:8888
     depends_on:
-      eureka-server:
+      eureka-server1:
+        condition: service_started
+      eureka-server2:
         condition: service_started
       config-server:
         condition: service_started
@@ -94,12 +111,15 @@ services:
     environment:
       SERVER_PORT: 8082
       CONFIG_SERVER_URL: http://config-server:8888
-      EUREKA_SERVER_URL: http://eureka-server:8761/eureka/
+      EUREKA_SERVER_URL: "http://eureka-server1:8761/eureka/,http://eureka-server2:8762/eureka/"
       SPRING_DATASOURCE_URL: jdbc:postgresql://ai-service-db:5432/ai_service
+      SPRING_AI_GOOGLE_GENAI_EMBEDDING_TEXT_OPTIONS_DIMENSIONS: 768
     depends_on:
       config-server:
         condition: service_started
-      eureka-server:
+      eureka-server1:
+        condition: service_started
+      eureka-server2:
         condition: service_started
       ai-service-db:
         condition: service_healthy
